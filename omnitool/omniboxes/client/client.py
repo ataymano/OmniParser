@@ -4,64 +4,7 @@ import io
 import ipywidgets
 import json
 import time
-
-def _pyscript(commands):
-    script = ";".join(commands)
-    return f'python -c "{script}"'
-
-def _moveTo(x, y):
-    return {
-        'command': _pyscript([
-            'import pyautogui',
-            f'pyautogui.moveTo({x}, {y})'
-        ])
-    }
-
-def _click():
-    return {
-        'command': _pyscript([
-            'import pyautogui',
-            f'pyautogui.click()'
-        ])
-    }
-
-def _rightClick():
-    return {
-        'command': _pyscript([
-            'import pyautogui',
-            f'pyautogui.rightClick()'
-        ])
-    }
-
-def _doubleClick():
-    return {
-        'command': _pyscript([
-            'import pyautogui',
-            f'pyautogui.doubleClick()'
-        ])
-    }
-
-def _position(ignore_by_mock = True):
-    return {
-        'command': _pyscript([
-            'import pyautogui',
-            'import json',
-            'p = pyautogui.position()',
-            "print(json.dumps({'x': p.x, 'y': p.y}))",       
-        ]),
-        'ignore_by_mock': ignore_by_mock
-    }
-
-def _screensize(ignore_by_mock = True):
-    return {
-        'command': _pyscript([
-            'import pyautogui',
-            'import json',
-            'sz = pyautogui.size()',
-            "print(json.dumps({'width': sz.width, 'height': sz.height}))",       
-        ]),
-        'ignore_by_mock': ignore_by_mock
-    }
+import actions
 
 
 class InstanceClient:
@@ -92,10 +35,10 @@ class InstanceClient:
             print(data)
 
     def position(self):
-        return json.loads(self.execute(_position()).json()['output'])
+        return json.loads(self.execute(actions.position()).json()['output'])
     
     def screensize(self):
-        return json.loads(self.execute(_screensize()).json()['output'])    
+        return json.loads(self.execute(actions.screensize()).json()['output'])    
 
     def ui(self):
         self.output = ipywidgets.Output()
@@ -113,19 +56,19 @@ class InstanceClient:
         rightClick = ipywidgets.Button(description = 'Right Click')
         doubleClick = ipywidgets.Button(description = 'Double Click')
 
-        x.observe(lambda v: self.do_and_show(_moveTo(x.value, y.value), waitTime.value), names='value')
-        y.observe(lambda v: self.do_and_show(_moveTo(x.value, y.value), waitTime.value), names='value')
+        x.observe(lambda v: self.do_and_show(actions.moveTo(x.value, y.value), waitTime.value), names='value')
+        y.observe(lambda v: self.do_and_show(actions.moveTo(x.value, y.value), waitTime.value), names='value')
 
-        click.on_click(lambda v: self.do_and_show(_click(), waitTime.value))
-        rightClick.on_click(lambda v: self.do_and_show(_rightClick(), waitTime.value))
-        doubleClick.on_click(lambda v: self.do_and_show(_doubleClick(), waitTime.value))
+        click.on_click(lambda v: self.do_and_show(actions.click(), waitTime.value))
+        rightClick.on_click(lambda v: self.do_and_show(actions.rightClick(), waitTime.value))
+        doubleClick.on_click(lambda v: self.do_and_show(actions.doubleClick(), waitTime.value))
 
         cmd = ipywidgets.Textarea(description = 'Commands', layout=ipywidgets.Layout(width='50%'))
         shell = ipywidgets.Checkbox(description = 'Shell', value = False)
         python = ipywidgets.Checkbox(description = 'Python', value = True)
         submit = ipywidgets.Button(description = 'Submit')
         submit.on_click(lambda v: self.do_and_show({
-            'command': _pyscript(cmd.value.split('\n')) if python.value else '&&'.join(cmd.value.split('\n')),
+            'command': actions._pyscript(cmd.value.split('\n')) if python.value else '&&'.join(cmd.value.split('\n')),
             'shell': shell.value
         }, waitTime.value))
         display(ipywidgets.VBox([
@@ -182,10 +125,10 @@ class NodeClient:
             print(data)
 
     def position(self, instance_id):
-        return json.loads(self.execute(instance_id, _position()).json()['output'])
+        return json.loads(self.execute(instance_id, actions.position()).json()['output'])
     
     def screensize(self, instance_id):
-        return json.loads(self.execute(instance_id, _screensize()).json()['output'])    
+        return json.loads(self.execute(instance_id, actions.screensize()).json()['output'])    
 
     def ui(self):
         self.output = ipywidgets.Output()
@@ -226,19 +169,19 @@ class NodeClient:
         rightClick = ipywidgets.Button(description = 'Right Click')
         doubleClick = ipywidgets.Button(description = 'Double Click')
 
-        x.observe(lambda v: self.do_and_show(self.instance_id, _moveTo(x.value, y.value), waitTime.value), names='value')
-        y.observe(lambda v: self.do_and_show(self.instance_id, _moveTo(x.value, y.value), waitTime.value), names='value')
+        x.observe(lambda v: self.do_and_show(self.instance_id, actions.moveTo(x.value, y.value), waitTime.value), names='value')
+        y.observe(lambda v: self.do_and_show(self.instance_id, actions.moveTo(x.value, y.value), waitTime.value), names='value')
 
-        click.on_click(lambda v: self.do_and_show(self.instance_id, _click(), waitTime.value))
-        rightClick.on_click(lambda v: self.do_and_show(self.instance_id, _rightClick(), waitTime.value))
-        doubleClick.on_click(lambda v: self.do_and_show(self.instance_id, _doubleClick(), waitTime.value))
+        click.on_click(lambda v: self.do_and_show(self.instance_id, actions.click(), waitTime.value))
+        rightClick.on_click(lambda v: self.do_and_show(self.instance_id, actions.rightClick(), waitTime.value))
+        doubleClick.on_click(lambda v: self.do_and_show(self.instance_id, actions.doubleClick(), waitTime.value))
 
         cmd = ipywidgets.Textarea(description = 'Commands', layout=ipywidgets.Layout(width='50%'))
         shell = ipywidgets.Checkbox(description = 'Shell', value = False)
         python = ipywidgets.Checkbox(description = 'Python', value = True)
         submit = ipywidgets.Button(description = 'Submit')
         submit.on_click(lambda v: self.do_and_show(self.instance_id, {
-            'command': _pyscript(cmd.value.split('\n')) if python.value else '&&'.join(cmd.value.split('\n')),
+            'command': actions._pyscript(cmd.value.split('\n')) if python.value else '&&'.join(cmd.value.split('\n')),
             'shell': shell.value
         }, waitTime.value))
 
@@ -320,10 +263,12 @@ class MasterClient:
             print(data)
 
     def position(self, instance):
-        return json.loads(self.execute(instance, _position()).json()['output'])
+        response = self.execute(instance, actions.position()).json()
+        return json.loads(response['output'])
     
     def screensize(self, instance):
-        return json.loads(self.execute(instance, _screensize()).json()['output'])    
+        response = self.execute(instance, actions.screensize()).json()
+        return json.loads(response['output'])    
 
     def ui(self):
         self.output = ipywidgets.Output()
@@ -361,19 +306,19 @@ class MasterClient:
         rightClick = ipywidgets.Button(description = 'Right Click')
         doubleClick = ipywidgets.Button(description = 'Double Click')
 
-        x.observe(lambda v: self.do_and_show(self.instance, _moveTo(x.value, y.value), waitTime.value), names='value')
-        y.observe(lambda v: self.do_and_show(self.instance, _moveTo(x.value, y.value), waitTime.value), names='value')
+        x.observe(lambda v: self.do_and_show(self.instance, actions.moveTo(x.value, y.value), waitTime.value), names='value')
+        y.observe(lambda v: self.do_and_show(self.instance, actions.moveTo(x.value, y.value), waitTime.value), names='value')
 
-        click.on_click(lambda v: self.do_and_show(self.instance, _click(), waitTime.value))
-        rightClick.on_click(lambda v: self.do_and_show(self.instance, _rightClick(), waitTime.value))
-        doubleClick.on_click(lambda v: self.do_and_show(self.instance, _doubleClick(), waitTime.value))
+        click.on_click(lambda v: self.do_and_show(self.instance, actions.click(), waitTime.value))
+        rightClick.on_click(lambda v: self.do_and_show(self.instance, actions.rightClick(), waitTime.value))
+        doubleClick.on_click(lambda v: self.do_and_show(self.instance, actions.doubleClick(), waitTime.value))
 
         cmd = ipywidgets.Textarea(description = 'Commands', layout=ipywidgets.Layout(width='50%'))
         shell = ipywidgets.Checkbox(description = 'Shell', value = False)
         python = ipywidgets.Checkbox(description = 'Python', value = True)
         submit = ipywidgets.Button(description = 'Submit')
         submit.on_click(lambda v: self.do_and_show(self.instance, {
-            'command': _pyscript(cmd.value.split('\n')) if python.value else '&&'.join(cmd.value.split('\n')),
+            'command': actions._pyscript(cmd.value.split('\n')) if python.value else '&&'.join(cmd.value.split('\n')),
             'shell': shell.value
         }, waitTime.value))
 
