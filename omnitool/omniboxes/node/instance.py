@@ -85,18 +85,19 @@ class Instance(IInstance):
 
     def _execute(self, command):
         self.logger.info(f'Running: {" ".join(command)}')
-        subprocess.run(command, check=True, stdout=subprocess.DEVNULL, stderr=subprocess.DEVNULL)
+        return subprocess.run(command, check=True, stderr=subprocess.DEVNULL)
 
     def create(self):
         if not os.path.exists(self.path()):
-            os.makedirs(f"omnibox-{self.instance_num}")
+            os.makedirs(self.path())
             subprocess.run(["cp", "-r", f"{str(self.root_path)}/common/win11storage/.", self.path()])
 
         try:
-            self._execute(["docker", "compose", "-f", str(self.config_path), "-p", f"omnibox-{self.instance_num}", "up", "-d"])
+            result = self._execute(["docker", "compose", "-f", str(self.config_path), "-p", f"omnibox-{self.instance_num}", "up", "-d"])
             self.logger.info(f"Instance {self.instance_num} launched successfully!")
         except subprocess.CalledProcessError as e:
             self.logger.error(f"Error launching instance {self.instance_num}: {e}")
+        return result
 
     def start(self):
         try:
@@ -132,13 +133,13 @@ class Instance(IInstance):
     def reset(self):
         self.delete()
         if os.path.exists(self.path()):
-            subprocess.run(["sudo", "rm", "-rf", f"{self.root_path}/omnibox-{self.instance_num}"], check=True)
+            subprocess.run(["sudo", "rm", "-rf", self.path()], check=True)
         self.create()
 
     def reset_soft(self):
         self.stop()
         if os.path.exists(self.path()):
-            subprocess.run(["sudo", "rm", "-rf", f"{self.root_path}/omnibox-{self.instance_num}"], check=True)
+            subprocess.run(["sudo", "rm", "-rf", self.path()], check=True)
         self.start()
 
 
