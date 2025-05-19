@@ -40,7 +40,7 @@ networks:
 
 services:
   windows:
-    image: windows-local
+    image: aifrontiers.azurecr.io/omnibox/windows-local:1
     container_name: omni-windows-{instance}
     networks:
       - omnibox-network
