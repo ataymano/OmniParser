@@ -11,6 +11,12 @@ from node_manager import NodeManager, NodeRegistration
 import requests
 import argparse
 
+parser = argparse.ArgumentParser(description="OmniBox Host")
+parser.add_argument("--port", type=int, default=7000, help="Port to run the server on")
+parser.add_argument("--nodes", type=str, nargs='+', default=["http://localhost:8000", "http://localhost:8001"], help="List of node URLs to register")
+parser.add_argument("--keyvault", type=str, default=None, help="Key vault name for node info")
+args = parser.parse_args()
+
 # Configure logging
 logging.basicConfig(
     level=logging.INFO,
@@ -22,8 +28,8 @@ node_manager = NodeManager(logger = logger)
 
 @asynccontextmanager
 async def lifespan(app: FastAPI):
-    await node_manager.register_node(NodeRegistration(url = "http://localhost:8000"))
-#    await node_manager.register_node(NodeRegistration(url = "http://localhost:8001"))
+    for node_url in args.nodes:
+        await node_manager.register_node(NodeRegistration(url = node_url))
     tasks = asyncio.create_task(node_manager.update_statuses_worker())
     yield
     # Shutdown code goes here
@@ -141,7 +147,4 @@ def get_info():
 
 
 if __name__ == "__main__":
-    parser = argparse.ArgumentParser(description="OmniBox Host")
-    parser.add_argument("--port", type=int, default=7000, help="Port to run the server on")
-    args = parser.parse_args()
     uvicorn.run(app, host="0.0.0.0", port=args.port)
